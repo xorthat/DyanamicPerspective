@@ -1,0 +1,32 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{listings}
+\usepackage{pdfpages}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+
+\title{Maths fundamentals for Robotics: Project proposal\\
+Dynamic Perspective using inertial sensors and face detection}
+\author{Jai Prakash \& Jennifer Lake\\ \textbf{email:} \texttt{jprakash@andrew.cmu.edu} \& \texttt{jlake@andrew.cmu.edu }} 
+
+\begin{document}
+\maketitle
+
+The addition of inertial sensors to cell phones has lead to a new popular smartphone feature called dynamic perspective.  Dynamic perspective is the ability of a smartphone to react to the angle at which the phone is held in reference to the user’s face.  One popular application of dynamic perspective is displaying a generated image from perspective that corresponds to the angle at which the phone is being held.  This gives a responsive and intuitive way to interact with the digital devices.\\
+
+In this project, we will implement dynamic perspective using inertial sensor data (accelerometer, gyroscope and magnetometer) from an Android smartphone.  The inertial sensor data filtering and fusion will exclusively in the scope of this course’s project.  The goal of this project is to effectively filter out erroneous readings from the inertial sensors, fuse the sensor information, and represent the orientation of the phone as a quaternion.  The main challenge will be overcoming the noisiness of the sensor data from the smart phone.  An initial plan on how to tackle this would be to use a combination of Kalman filtering, particle filtering, signal smoothing and band pass filtering.  An additional challenge will be how to effectively combine the inertial sensor data in an effective way.  The final challenge will be learning how to use quaternions, in which we have limited experience.\\
+
+Our primary motivation for wanting to represent the orientation of the smartphone as a quaternion is that quaternions allow 3 dimensional angles to be expressed in a compact way.  Additionally, they avoid the issue of gimbal lock and are therefore popular for use in robotics.  We believe that this is an important mathematical concept to learn and could be helpful in our future research.\\
+
+If time permits, we will explore fusing the inertial data with the geometric orientation of the user’s face, in order to build a full dynamic perspective system.  We would manipulate the rear view camera \cite{google} or a graphical object to simulate the perspective change in reference to the user (ego-motion).  We will use existing algorithms to track and identify the user’s face and will focus on the sensor fusion aspect of this problem. In many commercial applications of dynamic perspective, such as the Amazon fire phone \cite{amazon}, the smartphone has several cameras in order to estimate depth.  An additional challenge of this project will be that we will have to estimate depth (distance of the phone to the user’s face) because will only have data from one forward facing camera. This project aims at creating a low cost solution to mimic the dynamic perspective in regular smartphones by using the resources available onboard.
+
+\begin{thebibliography}{1}
+\bibitem{google}  Samuel A. Mann et al. Dynamic perspective video window. US patent (US 8379057 B2)
+\bibitem{amazon} Dynamic perspective in Amazon Firephone \url{https://www.youtube.com/watch?v=yTApE-3vqHo}
+\end{thebibliography}
+
+\end{document}
