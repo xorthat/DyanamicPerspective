@@ -19,7 +19,7 @@ public class Main {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         // Create a socket to listen on the port.
         try {
-            Socket clientSocket = new Socket(InetAddress.getByName("10.0.0.11"), 54544);
+            Socket clientSocket = new Socket(InetAddress.getByName("10.0.0.11"), 54721);
             BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             for(int i = 0; i < rate*seconds; i++) {
                 data.add(new PhoneData(inFromServer.readLine()));

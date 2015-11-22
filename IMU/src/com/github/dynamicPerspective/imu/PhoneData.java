@@ -1,13 +1,15 @@
 package com.github.dynamicPerspective.imu;
 
-/**
- * Created by Picard on 11/22/15.
- */
-public class PhoneData {
+public abstract class PhoneData {
 
-    public PhoneData(String str)
+    public PhoneData(String data)
     {
+        //parse into sections
+    }
 
+    public Quaternion getOrientation()
+    {
+        return null;
     }
 
 }
