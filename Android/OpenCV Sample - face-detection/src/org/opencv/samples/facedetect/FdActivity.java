@@ -10,6 +10,7 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
@@ -138,6 +139,7 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 		mOpenCvCameraView.setCvCameraViewListener(this);
 		Button click = (Button) findViewById(R.id.button1);
 		click.setOnClickListener(this);
+		click.setVisibility(View.GONE);
 
 	}
 
@@ -176,10 +178,8 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 	}
 
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-
 		mRgba = inputFrame.rgba();
 		mGray = inputFrame.gray();
-		// Log.i("JAI", "Size is " + mRgba.cols() + "x" + mRgba.rows());
 		/*
 		 * Core.flip(mRgba,mRgba,0); Core.flip(mGray,mGray,0);
 		 */
@@ -206,7 +206,10 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 			Log.e(TAG, "Detection method is not selected!");
 		}
 
-		double thetaX = 0, thetaY = 0;
+		double W = mRgba.cols();
+		double H = mRgba.rows();
+		double f = 1449.3290;
+		double thetaX = 0, thetaY = 0, maskX = 0.25 * W, maskY = 0.25 * H;
 		Rect[] facesArray = faces.toArray();
 		double faceX = mRgba.cols(), faceY = mRgba.rows();
 		int len = facesArray.length > 1 ? 1 : facesArray.length;
@@ -215,13 +218,27 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 			faceX = facesArray[i].x + facesArray[i].width / 2;
 			faceY = facesArray[i].y + facesArray[i].height / 2;
 			Imgproc.circle(mRgba, new Point(faceX, faceY), 5, new Scalar(255, 255, 0, 255));
-			thetaX = Math.atan((faceX - mRgba.cols()/2) / 1449.3290 ) * 180 / Math.PI;
-			thetaY = Math.atan((faceY - mRgba.rows()/2) / 1449.5544) * 180 / Math.PI;
+			thetaX = Math.atan((faceX - mRgba.cols() / 2) / f) * 180 / Math.PI;
+			thetaY = Math.atan((faceY - mRgba.rows() / 2) / f) * 180 / Math.PI;
+			maskX = 0.25 * W - 0.5 * f * Math.tan(thetaX * Math.PI / 180);
+			maskY = 0.25 * H + 0.5 * f * Math.tan(thetaY * Math.PI / 180);
 		}
-
-		Imgproc.putText(mRgba, "thetaX: " + thetaX + "thetaY: "+ thetaY, new Point(10, mRgba.rows() - 10), 3, 1,
+		//Mat cube = Mat.zeros(mRgba.size(), mRgba.type());
+		if (maskX >= 0 && maskX <= W && maskY >= 0 && maskY <= H) {
+			Rect ROI = new Rect((int) (maskX), (int) (maskY), (int) (W / 2), (int) (H / 2));
+			Scalar col = new Scalar(255, 255, 255, 255);
+			mRgba.submat(ROI).setTo(col);
+			Imgproc.line(mRgba, new Point(0,0), new Point(maskX, maskY), col);
+			Imgproc.line(mRgba, new Point(0,H), new Point(maskX, maskY + 0.5*H), col);
+			Imgproc.line(mRgba, new Point(W,0), new Point(maskX + 0.5*W, maskY), col);
+			Imgproc.line(mRgba, new Point(W,H), new Point(maskX + 0.5*W, maskY+ 0.5*H), col);
+		}
+		/*
+		 * Mat dst = new Mat(); Core.addWeighted(mRgba, 0.25, cube, 0.75, 0,
+		 * dst);
+		 */
+		Imgproc.putText(mRgba, "thetaX: " + thetaX + "thetaY: " + thetaY, new Point(10, mRgba.rows() - 10), 3, 1,
 				new Scalar(255, 0, 0, 255), 2);
-
 		return mRgba;
 	}
 
