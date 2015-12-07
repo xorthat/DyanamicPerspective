@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
@@ -41,7 +43,7 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
 
-public class FdActivity extends Activity implements CvCameraViewListener2, OnClickListener {
+public class FdActivity2 extends Activity implements CvCameraViewListener2, OnClickListener {
 
 	private static final String TAG = "OCVSample::Activity";
 	private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
@@ -56,6 +58,7 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 
 	private Mat mRgba;
 	private Mat mGray;
+	private Mat right;
 	private File mCascadeFile;
 	private CascadeClassifier mJavaDetector;
 	private DetectionBasedTracker mNativeDetector;
@@ -67,7 +70,6 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 	private int mAbsoluteFaceSize = 0;
 	private int imgnum = 1;
 	private KalmanFilter kalman;
-	private float prev_faceX = 0, prev_faceY = 0;
 
 	private CameraBridgeViewBase mOpenCvCameraView;
 
@@ -123,7 +125,7 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 		}
 	};
 
-	public FdActivity() {
+	public FdActivity2() {
 		mDetectorName = new String[2];
 		mDetectorName[JAVA_DETECTOR] = "Java";
 		mDetectorName[NATIVE_DETECTOR] = "Native (tracking)";
@@ -176,6 +178,7 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 	public void onCameraViewStarted(int width, int height) {
 		mGray = new Mat();
 		mRgba = new Mat();
+		right = new Mat();
 		//Log.i(TAG, "Jai width is " + width + "x" + height);
 		kalman = new KalmanFilter(4, 2, 0, CvType.CV_32F);
 		Mat transitionMatrix = new Mat(4, 4, CvType.CV_32F, new Scalar(0));
@@ -205,11 +208,16 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 	public void onCameraViewStopped() {
 		mGray.release();
 		mRgba.release();
+		right.release();
 	}
 
 	public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
 		mRgba = inputFrame.rgba();
 		mGray = inputFrame.gray();
+		double W = mGray.cols();
+		double H = mGray.rows();
+		mRgba.setTo(new Scalar(0,0,0,0));
+		mRgba.copyTo(right);
 		/*
 		 * Core.flip(mRgba,mRgba,0); Core.flip(mGray,mGray,0);
 		 */
@@ -236,8 +244,6 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 			Log.e(TAG, "Detection method is not selected!");
 		}
 
-		double W = mRgba.cols();
-		double H = mRgba.rows();
 		double f = 1449.3290;
 		double thetaX = 0, thetaY = 0, maskX = 0.25 * W, maskY = 0.25 * H;
 		Rect[] facesArray = faces.toArray();
@@ -247,8 +253,8 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 		for (int i = 0; i < len; i++) {
 			faceX = facesArray[i].x + facesArray[i].width / 2;
 			faceY = facesArray[i].y + facesArray[i].height / 2;
-			Imgproc.circle(mRgba, new Point(faceX, faceY), 5, new Scalar(255, 255, 0, 255));
-			Imgproc.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(), FACE_RECT_COLOR, 3);
+			//Imgproc.circle(mRgba, new Point(faceX, faceY), 5, new Scalar(255, 255, 0, 255));
+			//Imgproc.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(), FACE_RECT_COLOR, 3);
 		}
 		// Kalman filter update
 		Mat prediction = kalman.predict();
@@ -260,7 +266,7 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 		double faceXKF = estimated.get(0, 0)[0];
 		double faceYKF = estimated.get(1, 0)[0];
 		// kalman filter done
-		Imgproc.circle(mRgba, new Point(faceXKF, faceYKF), 5, new Scalar(255, 0, 0, 255));
+		//Imgproc.circle(mRgba, new Point(faceXKF, faceYKF), 5, new Scalar(255, 0, 0, 255));
 		Log.i(TAG, "Jai Predicted values are :"+ faceXKF+"x"+faceYKF);
 		thetaX = Math.atan((faceXKF - mRgba.cols() / 2) / f) * 180 / Math.PI;
 		thetaY = Math.atan((faceYKF - mRgba.rows() / 2) / f) * 180 / Math.PI;
@@ -268,24 +274,38 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 		maskY = 0.25 * H + 0.5 * f * Math.tan(thetaY * Math.PI / 180);
 
 		// Mat cube = Mat.zeros(mRgba.size(), mRgba.type());
+		int off = 50;
 		if (maskX >= 0 && maskX <= W && maskY >= 0 && maskY <= H) {
-			Rect ROI = new Rect((int) (maskX), (int) (maskY), (int) (W / 2), (int) (H / 2));
 			Scalar col = new Scalar(255, 255, 255, 255);
-			mRgba.submat(ROI).setTo(col);
+			Scalar left_col = new Scalar(255, 0, 0, 128);
+			Scalar right_col = new Scalar(0, 255, 255, 128);
+			
 			int[][] source = { { 0, 0 }, { 0, (int) H }, { (int) W, 0 }, { (int) W, (int) H } };
-			int[][] dest = { { (int) maskX, (int) maskY }, { (int) maskX, (int) (maskY + 0.5 * H) },
+			maskX = maskX - off;
+			int[][] left_C = { { (int) maskX , (int) maskY }, { (int) maskX, (int) (maskY + 0.5 * H) },
 					{ (int) (maskX + 0.5 * W), (int) maskY }, { (int) (maskX + +0.5 * W), (int) (maskY + 0.5 * H) } };
-			// Log.i("TAG", "JAI Length is " + source.length);
+			Rect ROI = new Rect((int) (maskX), (int) (maskY), (int) (W / 2), (int) (H / 2));
+			mRgba.submat(ROI).setTo(left_col);
 			for (int i = 0; i < source.length; i++) {
-				Imgproc.line(mRgba, new Point(source[i][0], source[i][1]), new Point(dest[i][0], dest[i][1]), col, 4);
+				Imgproc.line(mRgba, new Point(source[i][0], source[i][1]), new Point(left_C[i][0], left_C[i][1]), left_col, 4);
 			}
+			maskX = maskX + 2*off;
+			int[][] right_C = { { (int) maskX, (int) maskY }, { (int) maskX, (int) (maskY + 0.5 * H) },
+					{ (int) (maskX + 0.5 * W), (int) maskY }, { (int) (maskX + +0.5 * W), (int) (maskY + 0.5 * H) } };
+			ROI = new Rect((int) (maskX), (int) (maskY), (int) (W / 2), (int) (H / 2));
+			right.submat(ROI).setTo(right_col);
+			for (int i = 0; i < source.length; i++) {
+				Imgproc.line(right, new Point(source[i][0], source[i][1]), new Point(right_C[i][0], right_C[i][1]), right_col, 4);
+			}
+
 		}
+		Core.addWeighted(mRgba, 0.5, right, 0.5, 0, mRgba);
 		/*
 		 * Mat dst = new Mat(); Core.addWeighted(mRgba, 0.25, cube, 0.75, 0,
 		 * dst);
 		 */
-		Imgproc.putText(mRgba, "thetaX: " + thetaX + "thetaY: " + thetaY, new Point(10, mRgba.rows() - 10), 3, 1,
-				new Scalar(255, 0, 0, 255), 2);
+		Imgproc.putText(mRgba, "Welcome to 3D world", new Point(W/2, H/2), 3, 1,
+				new Scalar(0, 0, 255, 255), 2);
 		return mRgba;
 	}
 
