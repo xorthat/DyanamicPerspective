@@ -1,5 +1,8 @@
 package org.opencv.samples.facedetect;
 
+// Code reference for Kalman filter:
+// https://github.com/Franciscodesign/Moving-Target-Tracking-with-OpenCV/blob/master/src/sonkd/Kalman.java
+// http://www.morethantechnical.com/2011/06/17/simple-kalman-filter-for-tracking-using-opencv-2-2-w-code/
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,6 +24,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.objdetect.CascadeClassifier;
+import org.opencv.video.KalmanFilter;
 import org.opencv.imgproc.Imgproc;
 
 import android.app.Activity;
@@ -62,6 +66,7 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 	private float mRelativeFaceSize = 0.2f;
 	private int mAbsoluteFaceSize = 0;
 	private int imgnum = 1;
+	private KalmanFilter kalman;
 
 	private CameraBridgeViewBase mOpenCvCameraView;
 
@@ -170,6 +175,30 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 	public void onCameraViewStarted(int width, int height) {
 		mGray = new Mat();
 		mRgba = new Mat();
+		//Log.i(TAG, "Jai width is " + width + "x" + height);
+		kalman = new KalmanFilter(4, 2, 0, CvType.CV_32F);
+		Mat transitionMatrix = new Mat(4, 4, CvType.CV_32F, new Scalar(0));
+		float[] tM = { 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1 };
+		transitionMatrix.put(0, 0, tM);
+		kalman.set_transitionMatrix(transitionMatrix);
+		Mat statePre = new Mat(4, 1, CvType.CV_32F, new Scalar(0));
+		statePre.put(0, 0, width / 2);
+		statePre.put(1, 0, height / 2);
+		kalman.set_statePre(statePre);
+
+		kalman.set_measurementMatrix(Mat.eye(2, 4, CvType.CV_32F));
+
+		Mat processNoiseCov = Mat.eye(4, 4, CvType.CV_32F);
+		processNoiseCov = processNoiseCov.mul(processNoiseCov, 1e-4);
+		kalman.set_processNoiseCov(processNoiseCov);
+
+		Mat id1 = Mat.eye(2, 2, CvType.CV_32F);
+		id1 = id1.mul(id1, 1e-1);
+		kalman.set_measurementNoiseCov(id1);
+
+		Mat id2 = Mat.eye(4, 4, CvType.CV_32F);
+		//id2 = id2.mul(id2, 0.1);
+		kalman.set_errorCovPost(id2);
 	}
 
 	public void onCameraViewStopped() {
@@ -211,27 +240,44 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 		double f = 1449.3290;
 		double thetaX = 0, thetaY = 0, maskX = 0.25 * W, maskY = 0.25 * H;
 		Rect[] facesArray = faces.toArray();
-		double faceX = mRgba.cols(), faceY = mRgba.rows();
+		double faceX = mRgba.cols()/2, faceY = mRgba.rows()/2;
+		//Log.i(TAG, "Jai width is " + faceX + "x" + faceY);
 		int len = facesArray.length > 1 ? 1 : facesArray.length;
 		for (int i = 0; i < len; i++) {
-			Imgproc.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(), FACE_RECT_COLOR, 3);
 			faceX = facesArray[i].x + facesArray[i].width / 2;
 			faceY = facesArray[i].y + facesArray[i].height / 2;
 			Imgproc.circle(mRgba, new Point(faceX, faceY), 5, new Scalar(255, 255, 0, 255));
-			thetaX = Math.atan((faceX - mRgba.cols() / 2) / f) * 180 / Math.PI;
-			thetaY = Math.atan((faceY - mRgba.rows() / 2) / f) * 180 / Math.PI;
-			maskX = 0.25 * W - 0.5 * f * Math.tan(thetaX * Math.PI / 180);
-			maskY = 0.25 * H + 0.5 * f * Math.tan(thetaY * Math.PI / 180);
+			Imgproc.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(), FACE_RECT_COLOR, 3);
 		}
-		//Mat cube = Mat.zeros(mRgba.size(), mRgba.type());
+		// Kalman filter update
+		Mat prediction = kalman.predict();
+		Mat measurement = new Mat(2, 1, CvType.CV_32F, new Scalar(0));
+		measurement.put(0, 0, faceX);
+		measurement.put(1, 0, faceY);
+		
+		Mat estimated = kalman.correct(measurement);
+		double faceXKF = estimated.get(0, 0)[0];
+		double faceYKF = estimated.get(1, 0)[0];
+		// kalman filter done
+		Imgproc.circle(mRgba, new Point(faceXKF, faceYKF), 5, new Scalar(255, 0, 0, 255));
+		Log.i(TAG, "Jai Predicted values are :"+ faceXKF+"x"+faceYKF);
+		thetaX = Math.atan((faceXKF - mRgba.cols() / 2) / f) * 180 / Math.PI;
+		thetaY = Math.atan((faceYKF - mRgba.rows() / 2) / f) * 180 / Math.PI;
+		maskX = 0.25 * W - 0.5 * f * Math.tan(thetaX * Math.PI / 180);
+		maskY = 0.25 * H + 0.5 * f * Math.tan(thetaY * Math.PI / 180);
+
+		// Mat cube = Mat.zeros(mRgba.size(), mRgba.type());
 		if (maskX >= 0 && maskX <= W && maskY >= 0 && maskY <= H) {
 			Rect ROI = new Rect((int) (maskX), (int) (maskY), (int) (W / 2), (int) (H / 2));
 			Scalar col = new Scalar(255, 255, 255, 255);
 			mRgba.submat(ROI).setTo(col);
-			Imgproc.line(mRgba, new Point(0,0), new Point(maskX, maskY), col);
-			Imgproc.line(mRgba, new Point(0,H), new Point(maskX, maskY + 0.5*H), col);
-			Imgproc.line(mRgba, new Point(W,0), new Point(maskX + 0.5*W, maskY), col);
-			Imgproc.line(mRgba, new Point(W,H), new Point(maskX + 0.5*W, maskY+ 0.5*H), col);
+			int[][] source = { { 0, 0 }, { 0, (int) H }, { (int) W, 0 }, { (int) W, (int) H } };
+			int[][] dest = { { (int) maskX, (int) maskY }, { (int) maskX, (int) (maskY + 0.5 * H) },
+					{ (int) (maskX + 0.5 * W), (int) maskY }, { (int) (maskX + +0.5 * W), (int) (maskY + 0.5 * H) } };
+			// Log.i("TAG", "JAI Length is " + source.length);
+			for (int i = 0; i < source.length; i++) {
+				Imgproc.line(mRgba, new Point(source[i][0], source[i][1]), new Point(dest[i][0], dest[i][1]), col, 4);
+			}
 		}
 		/*
 		 * Mat dst = new Mat(); Core.addWeighted(mRgba, 0.25, cube, 0.75, 0,
