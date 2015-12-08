@@ -15,11 +15,14 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
@@ -83,9 +86,9 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 
 				try {
 					// load cascade file from application resources
-					InputStream is = getResources().openRawResource(R.raw.lbpcascade_frontalface);
+					InputStream is = getResources().openRawResource(R.raw.haarcascade_frontalface_default);
 					File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
-					mCascadeFile = new File(cascadeDir, "lbpcascade_frontalface.xml");
+					mCascadeFile = new File(cascadeDir, "cascade_frontface_default.xml");
 					FileOutputStream os = new FileOutputStream(mCascadeFile);
 
 					byte[] buffer = new byte[4096];
@@ -280,6 +283,16 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 				Imgproc.line(mRgba, new Point(source[i][0], source[i][1]), new Point(dest[i][0], dest[i][1]), col, 4);
 			}
 		}
+/*		FeatureDetector detector = FeatureDetector.create(FeatureDetector.SIFT);
+	    DescriptorExtractor SurfExtractor = DescriptorExtractor.create(DescriptorExtractor.SURF);
+	    MatOfKeyPoint keypoints = new MatOfKeyPoint();
+	    MatOfKeyPoint logoKeypoints = new MatOfKeyPoint();
+
+	     detector.detect(img1, keypoints);//this is the problem "fatal signal"
+	     Log.d("LOG!", "number of query Keypoints= " + keypoints.size());
+	     detector.detect(img2, logoKeypoints);
+	     Log.d("LOG!", "number of logo Keypoints= " + logoKeypoints.size());*/
+
 		/*
 		 * Mat dst = new Mat(); Core.addWeighted(mRgba, 0.25, cube, 0.75, 0,
 		 * dst);

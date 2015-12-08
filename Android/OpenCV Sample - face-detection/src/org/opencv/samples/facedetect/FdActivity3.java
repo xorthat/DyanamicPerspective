@@ -43,7 +43,7 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
 
-public class FdActivity2 extends Activity implements CvCameraViewListener2, OnClickListener {
+public class FdActivity3 extends Activity implements CvCameraViewListener2, OnClickListener {
 
 	private static final String TAG = "OCVSample::Activity";
 	private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
@@ -86,10 +86,10 @@ public class FdActivity2 extends Activity implements CvCameraViewListener2, OnCl
 				try {
 					// load cascade file from application resources
 					//InputStream is = getResources().openRawResource(R.raw.lbpcascade_frontalface);
-					InputStream is = getResources().openRawResource(R.raw.cascade);
+					InputStream is = getResources().openRawResource(R.raw.haarcascade_frontalface_default);
 					File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
 					//mCascadeFile = new File(cascadeDir, "lbpcascade_frontalface.xml");
-					mCascadeFile = new File(cascadeDir, "cascade.xml");
+					mCascadeFile = new File(cascadeDir, "haarcascade_frontalface_default.xml");
 					FileOutputStream os = new FileOutputStream(mCascadeFile);
 
 					byte[] buffer = new byte[4096];
@@ -127,7 +127,7 @@ public class FdActivity2 extends Activity implements CvCameraViewListener2, OnCl
 		}
 	};
 
-	public FdActivity2() {
+	public FdActivity3() {
 		mDetectorName = new String[2];
 		mDetectorName[JAVA_DETECTOR] = "Java";
 		mDetectorName[NATIVE_DETECTOR] = "Native (tracking)";
@@ -275,38 +275,20 @@ public class FdActivity2 extends Activity implements CvCameraViewListener2, OnCl
 		maskX = 0.25 * W - 0.5 * f * Math.tan(thetaX * Math.PI / 180);
 		maskY = 0.25 * H + 0.5 * f * Math.tan(thetaY * Math.PI / 180);
 
-		// Mat cube = Mat.zeros(mRgba.size(), mRgba.type());
-		int off = 50;
 		if (maskX >= 0 && maskX <= W && maskY >= 0 && maskY <= H) {
-			Scalar col = new Scalar(255, 255, 255, 255);
-			Scalar left_col = new Scalar(255, 0, 0, 128);
-			Scalar right_col = new Scalar(0, 255, 255, 128);
-			
-			int[][] source = { { 0, 0 }, { 0, (int) H }, { (int) W, 0 }, { (int) W, (int) H } };
-			maskX = maskX - off;
-			int[][] left_C = { { (int) maskX , (int) maskY }, { (int) maskX, (int) (maskY + 0.5 * H) },
-					{ (int) (maskX + 0.5 * W), (int) maskY }, { (int) (maskX + +0.5 * W), (int) (maskY + 0.5 * H) } };
 			Rect ROI = new Rect((int) (maskX), (int) (maskY), (int) (W / 2), (int) (H / 2));
-			mRgba.submat(ROI).setTo(left_col);
-			for (int i = 0; i < source.length; i++) {
-				Imgproc.line(mRgba, new Point(source[i][0], source[i][1]), new Point(left_C[i][0], left_C[i][1]), left_col, 4);
-			}
-			maskX = maskX + 2*off;
-			int[][] right_C = { { (int) maskX, (int) maskY }, { (int) maskX, (int) (maskY + 0.5 * H) },
+			Scalar col = new Scalar(255, 255, 255, 255);
+			mRgba.submat(ROI).setTo(col);
+			int[][] source = { { 0, 0 }, { 0, (int) H }, { (int) W, 0 }, { (int) W, (int) H } };
+			int[][] dest = { { (int) maskX, (int) maskY }, { (int) maskX, (int) (maskY + 0.5 * H) },
 					{ (int) (maskX + 0.5 * W), (int) maskY }, { (int) (maskX + +0.5 * W), (int) (maskY + 0.5 * H) } };
-			ROI = new Rect((int) (maskX), (int) (maskY), (int) (W / 2), (int) (H / 2));
-			right.submat(ROI).setTo(right_col);
+			// Log.i("TAG", "JAI Length is " + source.length);
 			for (int i = 0; i < source.length; i++) {
-				Imgproc.line(right, new Point(source[i][0], source[i][1]), new Point(right_C[i][0], right_C[i][1]), right_col, 4);
+				Imgproc.line(mRgba, new Point(source[i][0], source[i][1]), new Point(dest[i][0], dest[i][1]), col, 4);
 			}
-
 		}
-		Core.addWeighted(mRgba, 0.5, right, 0.5, 0, mRgba);
 		
 		//Mat dst = new Mat(); Core.addWeighted(mRgba, 0.25, cube, 0.75, 0, dst);
-		 
-		Imgproc.putText(mRgba, "Welcome to 3D world", new Point(W/2-100, H/2), 3, 1,
-				new Scalar(0, 0, 255, 255), 3);
 		return mRgba;
 	}
 
