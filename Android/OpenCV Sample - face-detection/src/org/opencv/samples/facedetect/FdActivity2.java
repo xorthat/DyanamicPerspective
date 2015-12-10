@@ -279,8 +279,8 @@ public class FdActivity2 extends Activity implements CvCameraViewListener2, OnCl
 		int off = 50;
 		if (maskX >= 0 && maskX <= W && maskY >= 0 && maskY <= H) {
 			Scalar col = new Scalar(255, 255, 255, 255);
-			Scalar left_col = new Scalar(255, 0, 0, 128);
-			Scalar right_col = new Scalar(0, 255, 255, 128);
+			Scalar left_col = new Scalar(255, 0, 0, 255);
+			Scalar right_col = new Scalar(0, 255, 255, 255);
 			
 			int[][] source = { { 0, 0 }, { 0, (int) H }, { (int) W, 0 }, { (int) W, (int) H } };
 			maskX = maskX - off;
@@ -301,12 +301,17 @@ public class FdActivity2 extends Activity implements CvCameraViewListener2, OnCl
 			}
 
 		}
+/*		Imgproc.putText(mRgba, "3D", new Point(W/4 + maskX - 2*off + off/20,maskY - H/10), 3, 3,
+				new Scalar(0, 255, 255, 255), 3);
+		Imgproc.putText(right, "3D", new Point(W/4+ maskX -2*off - off/20, maskY - H/10), 3, 3,
+				new Scalar(255, 0, 0, 255), 3);*/
 		Core.addWeighted(mRgba, 0.5, right, 0.5, 0, mRgba);
+		Imgproc.putText(mRgba, "3D", new Point(W/2, H/10), 3, 3,
+				new Scalar(255, 255, 255, 255), 3);
 		
 		//Mat dst = new Mat(); Core.addWeighted(mRgba, 0.25, cube, 0.75, 0, dst);
 		 
-		Imgproc.putText(mRgba, "Welcome to 3D world", new Point(W/2-100, H/2), 3, 1,
-				new Scalar(0, 0, 255, 255), 3);
+
 		return mRgba;
 	}
 
