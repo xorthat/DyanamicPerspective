@@ -2,3 +2,6 @@
 *.dex
 *.ap_
 .*
+*.aux
+*.log
+*.gz
