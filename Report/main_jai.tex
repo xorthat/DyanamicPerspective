@@ -125,6 +125,61 @@ To create a dynamic perspective, we need to first track the position of user wit
 \subsection{Kalman Filter}
 The face detection using the cascade classifier is subject to jitter due to noise in the scene. The face detection sometimes fails because of various reasons like change is lighting conditions, change in expression of the face etc. This detection might cause jitter in the rendering. In order to avoid the jitter, we need to smooth the face detection and handle the no-detection case. The Kalman filter \cite{kalman}, can handle statistical uncertainties and other accuracies and produce results that are more accurate than a single measurement.
 
+The Kalman filter models the uncertainties  in the states of position and velocities. The model alone is sufficient to predict the future uncertainties without remembering the past readings. which means that we can predict the state by knowing the parameters of the current state. Once the new reading arrive, the parameters of the model is updated.
+
+\begin{figure}
+\includegraphics[scale=0.3]{images/kalflow}
+\caption{Diagram showing the update in Kalman filter\\ credits: \url{http://www.bzarg.com/p/how-a-kalman-filter-works-in-pictures/}}
+\end{figure}
+
+The prediction step is given by the equation
+\begin{equation}
+\hat{x_k} = \mathbf{F_k} \hat{x}_{k-1} + \mathbf{B_k} \vec{u_k}
+\label{eqn:stateestimate}
+\end{equation}
+\begin{equation}
+\mathbf{P_k} = \mathbf{F_k} \mathbf{P_{k-1}} \mathbf{F_k}^T + \mathbf{Q_k}
+\label{eqn:estimatecovariance}
+\end{equation}
+
+Equation \ref{eqn:stateestimate} is called the state estimate (a priori) equation. And equation \ref{eqn:estimatecovariance} is called the estimate (a priori) covariance. The significance of each variable is as follows:
+\begin{itemize}
+\item $\mathbf{F_k}$ is the state transition model which is applied to the previous state $\hat{x}_{k−1}$
+\item $\mathbf{B_k}$ is the control-input model which is applied to the control vector $\vec{u}_k$
+\item $\mathbf{P_k}$ error covariance matrix (a measure of the estimated accuracy of the state estimate)
+\item $\mathbf{Q_k}$ the covariance of the process noise
+\end{itemize}
+
+Moving on to the update step, once we get the readings from the actual scenario, we need to update the model to update our belief about the scene. The update equations are given as
+\begin{equation}
+\label{eqn:kalmangain}
+\mathbf{K'} = \mathbf{P_k} \mathbf{H_k}^T \left( \mathbf{H_k} \mathbf{P_k} \mathbf{H_k}^T + \mathbf{R_k} \right)^{-1}
+\end{equation}
+
+\begin{equation}
+\hat{x'}_k = \hat{x}_k + \mathbf{K'} \left( \vec{z}_k - \mathbf{H_k} \hat{x}_k \right)
+\label{eqn:posterioristateestimate}
+\end{equation}
+
+\begin{equation}
+\mathbf{P'_k} = \mathbf{P_k} - \mathbf{K'}  \mathbf{H_k} \mathbf{P_k}
+\label{eqn:posterioriestimatecovariance}
+\end{equation}
+
+where,
+$$ \vec{z}_k = \mathbf{H_k} \hat{x}_k + \vec{v}_k$$
+$$ \vec{v}_k \approx \mathcal{N}(0, \mathbf{R_k})$$
+
+The equation \ref{eqn:kalmangain} is called the Kalman gain of the filter. The equation \ref{eqn:posterioristateestimate} is the updated (a posteriori) state estimation of the filter. And the equation \ref{eqn:posterioriestimatecovariance} is known as the updated (a posteriori) state covariance equation. The variables used in these equations are described below:
+
+\begin{itemize}
+\item $\mathbf{H_k}$ is the observation model which maps the true state space into the observed space
+\item $\vec{v}_k$ is the observation noise
+\item $\mathbf{R_k}$ is the covariance of observation noise which is assumed to be zero mean Gaussian white noise
+\end{itemize}
+
+After applying Kalman filter, the face detection becomes continuous and smooth to be used for dynamic perspective.
+
 \subsection{Finding viewing angle of user}
 The viewing angle is one of the critical measurements for creating a dynamic perspective system. After applying the Kalman filter to smoothen the face detection, we need to find the viewing angle with respect to the camera. Since all the coordinates are in image frame of reference, the angle can be found by using the following equations. 
 \begin{equation}
@@ -146,9 +201,6 @@ In equation \ref{eqn:thetax} and \ref{eqn:thetay}, $(x_f, y_f)$ is the location 
 
 Figure \ref{fig:viewangle} shows the viewing angle of the user. The view angle is the angle subtended by the user's position with the principal axis of the camera. The focal length of the camera is found by using camera calibration in opencv \cite{calibration}.
 
-
-\subsection{Classifier}
-    -Jai, not sure if this is needed.
 \subsection{Inertial Measurement Unit}
     -Jenna
 \subsection{Extended Kalman Filter}
@@ -171,8 +223,45 @@ f_x & \alpha_x & c_x\\
 
 The value of the focal length is in terms of the pixels. The resolution of the camea is 1920x1280, and the principal axis seems to be almost at the center of the image.
 
-\subsection{Multi-View Geometry Experiments}
-    -Jai, make subsubsections as needed
+\subsection{Kalman filter parameters}
+The Kalman filter parameters are chosen as follows
+$ \mathbf{F_k} = \begin{bmatrix}
+1 & 0 & 1 & 0\\
+0 & 1 & 0 & 1\\
+0 & 0 & 1 & 0\\
+0 & 0 & 0 & 1
+\end{bmatrix} $,
+$ \mathbf{H_k} = \begin{bmatrix}
+1 & 0 & 0 & 0\\
+0 & 1 & 0 & 0\\
+\end{bmatrix} $
+
+$$ \mathbf{Q_k} = \begin{bmatrix}
+0.0001 & 0 & 0 & 0\\
+0 & 0.0001 & 0 & 0\\
+0 & 0 & 0.0001 & 0\\
+0 & 0 & 0 & 0.0001
+\end{bmatrix} $$
+
+$$ \mathbf{R_k} = \begin{bmatrix}
+0.1 & 0 \\
+0 & 0.1\\
+\end{bmatrix} $$
+
+The initial estimates are given as
+
+$ \hat{x}_{0} = \begin{bmatrix}
+1\\1\\0\\0
+\end{bmatrix} $,
+$ \mathbf{P_{k0}} = \begin{bmatrix}
+0.1 & 0 & 0 & 0\\
+0 & 0.1 & 0 & 0\\
+0 & 0 & 0.1 & 0\\
+0 & 0 & 0 & 0.1
+\end{bmatrix} $
+
+$\mathbf{B_k}$ is not used, so its value is $\vec{0}$. For the update equation, the new detected point is used as position vector. In case of failure, $(\frac{W}{2}, \frac{H}{2})$ is used to update Kalman parameters.
+
 \subsection{IMU Experiments}
     -Jenna, make subsubsections as needed
 \section{Conclusions}
