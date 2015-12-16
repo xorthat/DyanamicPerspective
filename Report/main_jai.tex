@@ -262,8 +262,52 @@ $ \mathbf{P_{k0}} = \begin{bmatrix}
 
 $\mathbf{B_k}$ is not used, so its value is $\vec{0}$. For the update equation, the new detected point is used as position vector. In case of failure, $(\frac{W}{2}, \frac{H}{2})$ is used to update Kalman parameters.
 
+\subsection{Face detection and Kalman Filter}
+The positive parallax concept is demonstrated with a working demo on Samsung Galaxy Tab 10.1 (SM-P605L). the results are shown in figure \ref{fig:androiddemo} and \ref{fig:androiddemoanaglyph}. the system works real-time at 30fps. The equations used to generate the mask of size $(\frac{W}{2}, \frac{H}{2})$ is as follows
+
+\begin{equation}
+	X_{mask} = \frac{W}{4} - \frac{f}{2} \times \tan(\theta_x)
+\end{equation}
+\begin{equation}
+	Y_{mask} = \frac{H}{4} + \frac{f}{2} \times \tan(\theta_y)
+\end{equation}
+
+Here $X_{mask}$ and $Y_{mask}$ are the top-left corner of the mask used for rendering the positive parallax. The mask has a constant size as we are not addressing the scale factor in this project.
+
+Figure \ref{fig:androiddemoanaglyph} is an extension of the positive parallax concept which includes both the perspective change and the 3D rendering. The perspective change is because of the change in user's angle and the 3D rendering adds the depth perception to the perspective change making the system much more immersive. 
+
+
+\begin{figure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[scale=0.09]{images/jai}
+\caption{Face tracking is done in 30fps with cascade classifier. $\theta_x$ and $\theta_y$ are displayed in degrees}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[scale=0.09]{images/jenna2}
+\caption{Yellow dot shows the original centroid of face detection, red dot is the after Kalman filtering}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[scale=0.09]{images/3dperspective_user_left}
+\caption{UI change when the user views the tablet from left}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[scale=0.09]{images/3dperspective_user_right}
+\caption{UI change when user views the tablet from right}
+\end{subfigure}
+\caption{Results of the working Andoid demo}
+\label{fig:androiddemo}
+\end{figure}
+
+\begin{figure}
+\includegraphics[scale=0.09]{images/anaglyph}
+\caption{Result after adding the anaglyph demo to parallax}
+\label{fig:androiddemoanaglyph}
+\end{figure}
+
 \subsection{IMU Experiments}
     -Jenna, make subsubsections as needed
+
+
 \section{Conclusions}
     -Jai
 {\small{
