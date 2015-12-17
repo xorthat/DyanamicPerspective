@@ -45,7 +45,8 @@ There are several benefits to having more 3D-like displays.  3D-like displays ma
 
 The holy grail of 3D perspective transforms is to be able to provide augmented reality to the user.  This would allow the user to use their smart phone to interact with the world around them in an intuitive manner, such as in figure 1.  We hope that some of the work in this project, may help in future projects striving towards this goal.
 
-\begin{figure}
+
+\begin{figure}[!htbp]
 \centering
 \begin{subfigure}{0.22\textwidth}
 \includegraphics[height=35 mm]{AR_now}
@@ -207,7 +208,7 @@ However, it is possible for the user to hold the smart phone in an unconventiona
 \label{fig:unconventional}
 \end{figure}
 
-     -Jenna: finish this
+In the majority of cases, users will be holding the tablet or smart phone in a conventional matter.  For that reason, we focused our efforts on that case.
 
 \subsection{Finding viewing angle of user}
 Since all the coordinates are in image frame of reference, the angle can be found by using the following equations. 
@@ -228,10 +229,7 @@ In equation \ref{eqn:thetax} and \ref{eqn:thetay}, $(x_f, y_f)$ is the location 
 \label{fig:viewangle}
 \end{figure}
 
-Figure \ref{fig:viewangle} shows the viewing angle of the user. The view angle is the angle subtended by the user's position with the principal axis of the camera. The focal length of the camera is found by using camera calibration in OpenCV \cite{calibration}. 
-
-    -Jai: Include equations from reference
-
+Figure \ref{fig:viewangle} shows the viewing angle of the user. The view angle is the angle subtended by the user's position with the principal axis of the camera. The focal length of the camera is found by using camera calibration \cite{calibration}. 
 
 \subsection{Face Detection}
 The Viola-Jones algorithm was used for face detection because it is robust and fast \cite{Viola-Jones}.  The Viola-Jones algorithm has four main steps:
@@ -266,22 +264,139 @@ I(x,y) =  i(x,y) + I(x-1,y)
 score = \sum{black pixels} - \sum{white pixels}
 \end{equation}}
 
-    -Jenna : finish this
+Using the Haar features, the AdaBoost algorithm is used to find the combination of weak classifiers that will yield a good result when combined.  The AdaBoost algorithm works by iteratively reweighing each training datapoint and calculating the boundary which yields the lowest error.  Datapoints which are previously misclassifed receive a higher weight and datapoints that were previously correctly classified receive a lower weight.  Using this iterative method, the combination of weak classifiers (the Haar features) can be combined to find faces.
+
+The final step is to cascade the classifiers.  This is an optimization step where each Haar feature is ranked descending by how well they can identify a face.  This allows a quicker response during test time.
     
 \subsection{Inertial Measurement Unit}
-An Inertial Measurement Unit (IMU), is a sensor that features a triad of accelerometers and a triad of gyroscopes \cite{Graves}.  In cell phones, the IMU also typically features a magnetometer. 
-   
-   -Jenna : finish this 
-    
-\subsection{Kalman Filter}
-    -Jai : Include equations
-\subsection{Extended Kalman Filter}
-    -Jenna : Include Equations
-\section{Experiments}
-\subsection{Image Geometry Experiments}
- - Jai: put results here / how it was done
-\subsection{Camera Calibration}
+An Inertial Measurement Unit (IMU), is a sensor that features a triad of accelerometers and a triad of gyroscopes.  In cell phones, the IMU also typically features a magnetometer. 
 
+\subsection{Kalman Filter}
+The face detection using the cascade classifier is subject to jitter due to noise in the scene. The face detection sometimes fails because of various reasons like change is lighting conditions, change in expression of the face etc. This detection might cause jitter in the rendering. In order to avoid the jitter, we need to smooth the face detection and handle the no-detection case. The Kalman filter \cite{kalman}, can handle statistical uncertainties and other accuracies and produce results that are more accurate than a single measurement.
+
+The Kalman filter models the uncertainties  in the states of position and velocities. The model alone is sufficient to predict the future uncertainties without remembering the past readings. which means that we can predict the state by knowing the parameters of the current state. Once the new reading arrive, the parameters of the model is updated.
+
+\begin{figure}
+\includegraphics[scale=0.3]{kalflow}
+\caption{Diagram showing the update in Kalman filter\\ credits: [13]}
+\end{figure}
+
+The prediction step is given by the equation
+\begin{equation}
+\hat{x_k} = \mathbf{F_k} \hat{x}_{k-1} + \mathbf{B_k} \vec{u_k}
+\label{eqn:stateestimate}
+\end{equation}
+\begin{equation}
+\mathbf{P_k} = \mathbf{F_k} \mathbf{P_{k-1}} \mathbf{F_k}^T + \mathbf{Q_k}
+\label{eqn:estimatecovariance}
+\end{equation}
+
+Equation \ref{eqn:stateestimate} is called the state estimate (a priori) equation. And equation \ref{eqn:estimatecovariance} is called the estimate (a priori) covariance. The significance of each variable is as follows:
+\begin{itemize}
+\item $\mathbf{F_k}$ is the state transition model which is applied to the previous state $\hat{x}_{k−1}$
+\item $\mathbf{B_k}$ is the control-input model which is applied to the control vector $\vec{u}_k$
+\item $\mathbf{P_k}$ error covariance matrix (a measure of the estimated accuracy of the state estimate)
+\item $\mathbf{Q_k}$ the covariance of the process noise
+\end{itemize}
+
+Moving on to the update step, once we get the readings from the actual scenario, we need to update the model to update our belief about the scene. The update equations are given as
+\begin{equation}
+\label{eqn:kalmangain}
+\mathbf{K'} = \mathbf{P_k} \mathbf{H_k}^T \left( \mathbf{H_k} \mathbf{P_k} \mathbf{H_k}^T + \mathbf{R_k} \right)^{-1}
+\end{equation}
+
+\begin{equation}
+\hat{x'}_k = \hat{x}_k + \mathbf{K'} \left( \vec{z}_k - \mathbf{H_k} \hat{x}_k \right)
+\label{eqn:posterioristateestimate}
+\end{equation}
+
+\begin{equation}
+\mathbf{P'_k} = \mathbf{P_k} - \mathbf{K'}  \mathbf{H_k} \mathbf{P_k}
+\label{eqn:posterioriestimatecovariance}
+\end{equation}
+
+where,
+$$ \vec{z}_k = \mathbf{H_k} \hat{x}_k + \vec{v}_k$$
+$$ \vec{v}_k \approx \mathcal{N}(0, \mathbf{R_k})$$
+
+The equation \ref{eqn:kalmangain} is called the Kalman gain of the filter. The equation \ref{eqn:posterioristateestimate} is the updated (a posteriori) state estimation of the filter. And the equation \ref{eqn:posterioriestimatecovariance} is known as the updated (a posteriori) state covariance equation. The variables used in these equations are described below:
+
+\begin{itemize}
+\item $\mathbf{H_k}$ is the observation model which maps the true state space into the observed space
+\item $\vec{v}_k$ is the observation noise
+\item $\mathbf{R_k}$ is the covariance of observation noise which is assumed to be zero mean Gaussian white noise
+\end{itemize}
+
+After applying Kalman filter, the face detection becomes continuous and smooth to be used for positive parallax.
+\subsection{Extended Kalman Filter}
+The Extended Kalman Filter is built upon the same principles as the Kalman filter in the previous section \cite{Maria}.  The main difference is the dynamics of the system can be non-linear and may be represented by differentiable functions instead.  The state transition is now represented by equation \ref{eqn:ekf-state}.  The observation model is now represented by equation \ref{eqn:ekf-obs}.
+
+\begin{equation}
+x_k = f(x_{k-1}, u_k) + w_{k-1}
+\label{eqn:ekf-state}
+\end{equation}
+
+\begin{equation}
+z_k = h(x_k) + v_k
+\label{eqn:ekf-obs}
+\end{equation}
+
+The prediction stage then computes the predicted state estimate \ref{eqn:pred-state} and the predicted covariance estimate \ref{eqn:pred-cov}.
+
+\begin{equation}
+\hat{x}_{k|k-1} = f(\hat{x}_{k-1}, u_k)
+\label{eqn:pred-state}
+\end{equation}
+
+\begin{equation}
+P_{k|k-1} = F_kP_{k-1|k-1}F_k^T + Q_k
+\label{eqn:pred-cov}
+\end{equation}
+
+The state transition and observation matrices are shown in \ref{eqn:ekf-F} and \ref{eqn:ekf-H}.
+
+\begin{equation}
+\hat{F}_{k|k-1} = \frac{\delta f}{\delta x}\Bigr|_{\hat{x}_{k-1|k-1}, u_{k-1}}
+\label{eqn:ekf-F}
+\end{equation}
+
+\begin{equation}
+H_{k} = \frac{\delta h}{\delta x}\Bigr|_{\hat{x}_{k|k-1}}
+\label{eqn:ekf-H}
+\end{equation}
+
+The update step is completed by calculating the measurement residual \ref{eqn:measr}, covariance residual \ref{eqn:covr}, updated state estimate \ref{eqn:ekf-updateState}, updated covariance estimate \ref{eqn:ekf-updateCov}, and the near-optimal Kalman gain \ref{eqn:ekf-gain}.
+
+\begin{equation}
+\tilde{y_k} = z_k -h(\hat{x}_{k|k-1})
+\label{eqn:measr}
+\end{equation}
+
+\begin{equation}
+S_k = H_kP_{k|k-1}|H_k^T + R_k
+\label{eqn:covr}
+\end{equation}
+
+\begin{equation}
+K_k = P_{k}H_K^TS_k^{-1}
+\label{eqn:ekf-gain}
+\end{equation}
+
+\begin{equation}
+\hat{x}_{k|k-1} = \hat{x}_{k|k-1} + K_k\tilde{y}_k
+\label{eqn:ekf-updateState}
+\end{equation}
+
+\begin{equation}
+P_{k|k} = (I - K_kH_k)P_{k|k-1}
+\label{eqn:ekf-updateCov}
+\end{equation}
+
+\section{Experiments}
+\subsection{Smart Phone Orientation}
+The smartphone orientation was found using an Extended Kalman Filter.  We input the accelerometer, gyroscope and magnetic heading readings in order to get an accurate orientation.
+
+\subsection{Camera calibration}
 The camera calibration matrix is returned as
 \begin{equation}
 K = \begin{bmatrix}
@@ -296,10 +411,99 @@ f_x & \alpha_x & c_x\\
 \end{equation}
 
 The value of the focal length is in terms of the pixels. The resolution of the camera is 1920x1280, and the principal axis seems to be almost at the center of the image.
-\subsection{IMU Experiments}
-    -Jenna: put results here and how much it sucked
+
+\subsection{Kalman filter parameters}
+The Kalman filter parameters are chosen as follows
+$ \mathbf{F_k} = \begin{bmatrix}
+1 & 0 & 1 & 0\\
+0 & 1 & 0 & 1\\
+0 & 0 & 1 & 0\\
+0 & 0 & 0 & 1
+\end{bmatrix} $,
+$ \mathbf{H_k} = \begin{bmatrix}
+1 & 0 & 0 & 0\\
+0 & 1 & 0 & 0\\
+\end{bmatrix} $
+
+$$ \mathbf{Q_k} = \begin{bmatrix}
+0.0001 & 0 & 0 & 0\\
+0 & 0.0001 & 0 & 0\\
+0 & 0 & 0.0001 & 0\\
+0 & 0 & 0 & 0.0001
+\end{bmatrix} $$
+
+$$ \mathbf{R_k} = \begin{bmatrix}
+0.1 & 0 \\
+0 & 0.1\\
+\end{bmatrix} $$
+
+The initial estimates are given as
+
+$ \hat{x}_{0} = \begin{bmatrix}
+1\\1\\0\\0
+\end{bmatrix} $,
+$ \mathbf{P_{k0}} = \begin{bmatrix}
+0.1 & 0 & 0 & 0\\
+0 & 0.1 & 0 & 0\\
+0 & 0 & 0.1 & 0\\
+0 & 0 & 0 & 0.1
+\end{bmatrix} $
+
+$\mathbf{B_k}$ is not used, so its value is $\vec{0}$. For the update equation, the new detected point is used as position vector. In case of failure, $(\frac{W}{2}, \frac{H}{2})$ is used to update Kalman parameters.
+
+\subsection{Face detection and Kalman Filter}
+The positive parallax concept is demonstrated with a working demo on Samsung Galaxy Tab 10.1 (SM-P605L). the results are shown in figure \ref{fig:androiddemo} and \ref{fig:androiddemo2}. 
+
+
+The system works real-time at 30fps. The equations used to generate the mask of size $(\frac{W}{2}, \frac{H}{2})$ is as follows
+
+\begin{equation}
+	X_{mask} = \frac{W}{4} - \frac{f}{2} \times \tan(\theta_x)
+\end{equation}
+\begin{equation}
+	Y_{mask} = \frac{H}{4} + \frac{f}{2} \times \tan(\theta_y)
+\end{equation}
+
+Here $X_{mask}$ and $Y_{mask}$ are the top-left corner of the mask used for rendering the positive parallax. The mask has a constant size as we are not addressing the scale factor in this project.
+\begin{figure}[!htbp]
+\centering
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[scale=0.09]{jai}
+\caption{Face tracking is done in 30fps with cascade classifier. $\theta_x$ and $\theta_y$ are displayed in degrees}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[scale=0.09]{jenna2}
+\caption{Yellow dot shows the original centroid of face detection, red dot is the after Kalman filtering}
+\end{subfigure}
+\caption{Results of the working Android demo}
+\label{fig:androiddemo}
+\end{figure}
+
+Figure \ref{fig:androiddemo2} is an extension of the positive parallax concept which includes both the perspective change and the 3D rendering. The perspective change is because of the change in user's angle and the 3D rendering adds the depth perception to the perspective change making the system much more immersive. 
+
+
+\begin{figure}[!htbp]
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[scale=0.09]{3dperspective_user_left}
+\caption{UI change when the user views the tablet from left}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[scale=0.09]{3dperspective_user_right}
+\caption{UI change when user views the tablet from right}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[scale=0.09]{anaglyph}
+\end{subfigure}
+\caption{More results of the working Android demo}
+\label{fig:androiddemo2}
+\end{figure}
+
 \section{Conclusions}
-    -Both: wrap it up, future work if room is needed
+On a whole, the face detection worked very well and we are pleased with the results after applying Kalman filtering.  This allowed for a smooth tracking of the user's face in real time. The positive parallax effects felt responsive to users we surveyed and the 3D anaglyph effect was successful.  
+
+In the future, we would like to calculate the viewing distance of the user, so that we can scale the positive parallax effect accordingly.  When the user is far away, we would like the positive parallax effect to be deeper and more shallow when the user is closer.  In order to do this, we propose to approximate the interpupilliary distance to approximately 62-64 mm and use this as a ruler \cite{Army}.  
+
+In addition, we would like to explore the 3D geometry between the rear-facing camera and objects of interest in the scene.  These calculations could allow for more Augmented Reality-type applications. This would allow the surrounding environment of the user to become interactive with the smart phone and could open up a new avenue of smart phone technology.
     
 {\small{
 \begin{thebibliography}{15}
@@ -340,19 +544,23 @@ Viola, Paul, and Michael J. Jones. "Robust Real-Time Face Detection." \textit{In
 \bibitem{calibration}
 "Camera Calibration With OpenCV." \textit{OpenCV 3.0.0 Documentation}. Itseez, 10 Nov. 2014. Web. 15 Dec. 2015.  \url{http://docs.opencv.org/3.0-beta/doc/tutorials/calib3d/camera_calibration/camera_calibration.html}.
 
-%to be used
+\bibitem{Bzarg}
+Babb, Tim. "Bzarg." \textit{Bzarg}. Tim Babb, 11 Aug. 2015. Web. 16 Dec. 2015.
 
-\bibitem{Graves}
-Graves, Joe. "Design And Control Of A Vehicle For Neutral Buoyancy Simulation Of Space Operations." Thesis. University of Maryland, 1997. Print.
+\bibitem{Army}
+Gordon, C. C., Bradtmiller, B., Clauser, C.E., Churchill, T., McConville, J.T., Tebbetts, I., and Walker, R.A. (1989). 1987–1988 Anthropometric Survey of U.S. Army Personnel: Methods and Summary Statistics. TR-89-044. Natick MA: U.S. Army Natick Research, Development and Engineering Center.
 
-\bibitem{ArsTechnica}
-Cunningham, Andrew. "IPhone 6 and 6 Plus: In Deep with Apple’s Thinnest Phones." \textit{Ars Technica}. Conde Nast, 22 Sept. 2014. Web. 14 Dec. 2015.
+\bibitem{Maria}
+Ribeiro, Maria. "Kalman and Extended Kalman Filters: Concept, Derivation and Properties." Thesis. Institute for Systems and Robotics, 2004. Print.
 
-\bibitem{Gizmodo}
-Aguilar, Mario. "Here's Why the IPhone 5S Accelerometer Is So Screwed Up." \textit{Gizmodo}. Gawker Media, 16 Oct. 2013. Web. 14 Dec. 2015.
+% \bibitem{ArsTechnica}
+% Cunningham, Andrew. "IPhone 6 and 6 Plus: In Deep with Apple’s Thinnest Phones." \textit{Ars Technica}. Conde Nast, 22 Sept. 2014. Web. 14 Dec. 2015.
 
-\bibitem{Quan}
-Quan, Wei. \textit{INS/CNS/GNSS Integrated Navigation Technology}. Heidelberg: Springer, 2015. \textit{Springer Link}. Springer. Web. 14 Dec. 2015.
+% \bibitem{Gizmodo}
+% Aguilar, Mario. "Here's Why the IPhone 5S Accelerometer Is So Screwed Up." \textit{Gizmodo}. Gawker Media, 16 Oct. 2013. Web. 14 Dec. 2015.
+
+% \bibitem{Quan}
+% Quan, Wei. \textit{INS/CNS/GNSS Integrated Navigation Technology}. Heidelberg: Springer, 2015. \textit{Springer Link}. Springer. Web. 14 Dec. 2015.
 
 \endgroup
 \end{document}
