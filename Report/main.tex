@@ -34,27 +34,27 @@ Master of Science in Computer Vision\\
 \maketitle
 
 \begin{abstract}
-In this project, we aim to create a 3D perspective transformation on a smart phone screen that will give the illusion of screen having depth.  The user should feel as if they are looking into a long hallway, were objects can appear deeper and deeper into the hall. This is achieved by finding the three-dimensional vector between the user’s face and the center of the phone.  This was achieved by tracking the user’s face using the front-facing camera.  We also explored integrating this method with the smart phone's Internal Measurement Unit (IMU) in order to estimate the smart phone orientation. In both methods, Kalman filtering was used in order to create a more reliable vector prediction.
+In this project, we aim to create a 3D perspective transformation on a smart phone screen that will give the illusion of screen having depth.  The user should feel as if they are looking into a long hallway, where objects can appear deeper and deeper into the hall. This is achieved by finding the three-dimensional vector between the user’s face and the center of the phone.  This was achieved by tracking the user’s face using the front-facing camera.  We also explored integrating this method with the smart phone's Internal Measurement Unit (IMU) in order to estimate the smart phone orientation. In both methods, Kalman filtering was used in order to create a more reliable vector prediction.
 \end{abstract}
 
 \section{Introduction}
-\subsection{Motivation}
+%\subsection{Motivation}
 As mobile phones have evolved over the last twenty years, many of the major milestones have been in display improvements. Mobile phones have gone from very small, simple displays to larger and more colorful displays.  At the forefront of this evolution, there is a growing trend of three-dimensional displays. 
 
 There are several benefits to having more 3D-like displays.  3D-like displays may help users interact with User Interfaces in a more intuitive way, such as using the phone movement itself as a command.  This can help when using the phones when wearing gloves, which do not allow the use of the touch screen.  In addition, 3D-like displays may help users navigate using 3D maps, which are more representative of the surroundings in urban areas. Finally, 3D-like displays would be a major boost to the gaming industry, which constantly strives to make more and more realistic games.  With perspective effects that mimic real-world perspective effects, the user would experience a more immersive gaming experience.
 
-The holy grail of 3D perspective transforms is to be able to provide augmented reality to the user.  This would allow the user to use their smart phone to interact with the world around them in an intuitive manner, such as in figure 1.  We hope that some of the work in this project, may help in future projects striving towards this goal.
+The holy grail of 3D perspective transforms is to be able to provide augmented reality to the user.  This would allow the user to use their smart phone to interact with the world around them in an intuitive manner, such as in figure \ref{fig:arnow}.  We hope that some of the work in this project, may help in future projects striving towards this goal.
 
 
 \begin{figure}[!htbp]
 \centering
-\begin{subfigure}{0.22\textwidth}
-\includegraphics[height=35 mm]{AR_now}
+\begin{subfigure}{0.16\textwidth}
+\includegraphics[height=35 mm]{images/AR_now}
 \end{subfigure}
 \begin{subfigure}{0.22\textwidth}
-\includegraphics[height=25 mm]{AR_now1}
+\includegraphics[height=30 mm]{images/AR_now1}
 \end{subfigure}
-\caption{Augemented reality in present smartphones}
+\caption{Augemented reality in present smartphones. The graphical objects are augmented on the camera video feed}
 \label{fig:arnow}
 \end{figure}
 
@@ -64,7 +64,7 @@ The change in appearance of an object when viewed from multiple viewpoints is kn
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[height=30 mm]{parallax.png}
+\includegraphics[height=30 mm]{images/parallax.png}
 \caption{An example of the parallax effect.  The top of the figure shows the scene from above.  The bottom of the figure shows the views from each viewpoint.}
 \end{figure}
 
@@ -72,7 +72,7 @@ There are three types of parallax effects: negative, zero, and positive parallax
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[height=35 mm]{NegPosParallax.png}
+\includegraphics[height=35 mm]{images/NegPosParallax.png}
 \caption{Example of positive, zero, and negative parallax}
 \end{figure}
 
@@ -91,10 +91,10 @@ The Virtual Window works by using a Microsoft Kinect sensor, which projects a li
 \begin{figure}[!htbp]
 \centering
 \begin{subfigure}{0.22\textwidth}
-\includegraphics[width = 35 mm]{win1.png}
+\includegraphics[width = 35 mm]{images/win1.png}
 \end{subfigure}
 \begin{subfigure}{0.22\textwidth}
-\includegraphics[width = 35 mm]{win2.png}
+\includegraphics[width = 35 mm]{images/win2.png}
 \end{subfigure}
 \caption{Virtual Window from two different perspectives}
 \end{figure}
@@ -104,7 +104,7 @@ The Amazon Fire Phone uses four, front-facing camera's with wide 120 \degree vie
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[height=35 mm]{dp.jpg}
+\includegraphics[height=35 mm]{images/dp.jpg}
 \caption{Example of Amazon Fire Phone's Dynamic Perspective}
 \end{figure}
 
@@ -119,7 +119,7 @@ The ultimate goal of estimating a phone's orientation with respect to the user i
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[height=30 mm]{mata}
+\includegraphics[height=30 mm]{images/mata}
 \caption{Direct AR from Meta-glasses}
 \label{fig:directar}
 \end{figure}
@@ -129,10 +129,10 @@ The current direct AR systems are generally bulky and requires user to wear spec
 \begin{figure}[!htbp]
 \centering
 \begin{subfigure}{0.22\textwidth}
-\includegraphics[height=30 mm]{transparenttablet}
+\includegraphics[height=30 mm]{images/transparenttablet}
 \end{subfigure}
 \begin{subfigure}{0.22\textwidth}
-\includegraphics[height=30 mm]{transparenttablet1}
+\includegraphics[height=30 mm]{images/transparenttablet1}
 \end{subfigure}
 \caption{Digital transparency using Kinect on Android tablet}
 \label{fig:digitaltransparency}
@@ -142,7 +142,7 @@ This method uses a Kinect sensor to track the accurate 3D position of the user w
 
 \section{Method}
 \begin{figure}[!htbp]
-\includegraphics[scale=0.21]{block}
+\includegraphics[scale=0.21]{images/block}
 \caption{Block diagram of system}
 \label{fig:blockdia}
 \end{figure}
@@ -181,10 +181,10 @@ In order to render a positive parallax effect, we must estimate the vector betwe
 \begin{figure}[!htbp]
 \centering
 \begin{subfigure}{0.22\textwidth}
-\includegraphics[height=30 mm]{vector1}
+\includegraphics[height=30 mm]{images/vector1}
 \end{subfigure}
 \begin{subfigure}{0.22\textwidth}
-\includegraphics[height=30 mm]{vector2}
+\includegraphics[height=30 mm]{images/vector2}
 \end{subfigure}
 \caption{Example of vectors to be found}
 \label{fig:vectors}
@@ -194,7 +194,7 @@ Normally, a user will hold a smart phone orthogonally to the vector between the 
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[height=30 mm]{conventional.png}
+\includegraphics[height=30 mm]{images/conventional.png}
 \caption{Conventional way of holding a smart phone}
 \label{fig:orthogonal}
 \end{figure}
@@ -203,7 +203,7 @@ However, it is possible for the user to hold the smart phone in an unconventiona
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[height=30 mm]{unconventional.png}
+\includegraphics[height=30 mm]{images/unconventional.png}
 \caption{Unconventional way of holding a smart phone.}
 \label{fig:unconventional}
 \end{figure}
@@ -224,7 +224,7 @@ Since all the coordinates are in image frame of reference, the angle can be foun
 In equation \ref{eqn:thetax} and \ref{eqn:thetay}, $(x_f, y_f)$ is the location of the centroid of the user's face. Image size is $W \times H$. $f_x$ and $f_y$ are the focal length of the camera in pixels.
 
 \begin{figure}[!htbp]
-\includegraphics[scale=0.5]{view_angle}
+\includegraphics[scale=0.5]{images/view_angle}
 \caption{The viewing angle of the user with respect to front camera on smart phone}
 \label{fig:viewangle}
 \end{figure}
@@ -245,7 +245,7 @@ In the first step, Haar features are computed.  Haar features represent simple s
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[scale=0.5]{haar}
+\includegraphics[scale=0.5]{images/haar}
 \caption{An example of Haar features}
 \label{fig:Haar}
 \end{figure}
@@ -266,10 +266,7 @@ score = \sum{black pixels} - \sum{white pixels}
 
 Using the Haar features, the AdaBoost algorithm is used to find the combination of weak classifiers that will yield a good result when combined.  The AdaBoost algorithm works by iteratively reweighing each training datapoint and calculating the boundary which yields the lowest error.  Datapoints which are previously misclassifed receive a higher weight and datapoints that were previously correctly classified receive a lower weight.  Using this iterative method, the combination of weak classifiers (the Haar features) can be combined to find faces.
 
-The final step is to cascade the classifiers.  This is an optimization step where each Haar feature is ranked descending by how well they can identify a face.  This allows a quicker response during test time.
-    
-\subsection{Inertial Measurement Unit}
-An Inertial Measurement Unit (IMU), is a sensor that features a triad of accelerometers and a triad of gyroscopes.  In cell phones, the IMU also typically features a magnetometer. 
+The final step is to cascade the classifiers.  This is an optimization step where each Haar feature is ranked descending by how well they can identify a face.  This allows a quicker response during test time. 
 
 \subsection{Kalman Filter}
 The face detection using the cascade classifier is subject to jitter due to noise in the scene. The face detection sometimes fails because of various reasons like change is lighting conditions, change in expression of the face etc. This detection might cause jitter in the rendering. In order to avoid the jitter, we need to smooth the face detection and handle the no-detection case. The Kalman filter \cite{kalman}, can handle statistical uncertainties and other accuracies and produce results that are more accurate than a single measurement.
@@ -277,8 +274,9 @@ The face detection using the cascade classifier is subject to jitter due to nois
 The Kalman filter models the uncertainties  in the states of position and velocities. The model alone is sufficient to predict the future uncertainties without remembering the past readings. which means that we can predict the state by knowing the parameters of the current state. Once the new reading arrive, the parameters of the model is updated.
 
 \begin{figure}
-\includegraphics[scale=0.3]{kalflow}
-\caption{Diagram showing the update in Kalman filter\\ credits: [13]}
+\includegraphics[scale=0.3]{images/kalflow}
+\caption{Diagram showing the update in Kalman filter. credits \cite{Bzarg}}
+\label{fig:kalmanpredict}
 \end{figure}
 
 The prediction step is given by the equation
@@ -327,7 +325,11 @@ The equation \ref{eqn:kalmangain} is called the Kalman gain of the filter. The e
 \item $\mathbf{R_k}$ is the covariance of observation noise which is assumed to be zero mean Gaussian white noise
 \end{itemize}
 
-After applying Kalman filter, the face detection becomes continuous and smooth to be used for positive parallax.
+After applying Kalman filter, the face detection becomes continuous and smooth to be used for positive parallax. The steps involved in the Kalman prediction are summarized in figure \ref{fig:kalmanpredict}.
+
+\subsection{Inertial Measurement Unit}
+An Inertial Measurement Unit (IMU), is a sensor that features a triad of accelerometers and a triad of gyroscopes.  In cell phones, the IMU also typically features a magnetometer. The inertial sensors can be used to find the orientation of the phone with the world frame of reference and this can then be used to create a digital transparency as shown in figure \ref{fig:blockdia}.
+
 \subsection{Extended Kalman Filter}
 The Extended Kalman Filter is built upon the same principles as the Kalman filter in the previous section \cite{Maria}.  The main difference is the dynamics of the system can be non-linear and may be represented by differentiable functions instead.  The state transition is now represented by equation \ref{eqn:ekf-state}.  The observation model is now represented by equation \ref{eqn:ekf-obs}.
 
@@ -468,11 +470,11 @@ Here $X_{mask}$ and $Y_{mask}$ are the top-left corner of the mask used for rend
 \begin{figure}[!htbp]
 \centering
 \begin{subfigure}{0.5\textwidth}
-\includegraphics[scale=0.09]{jai}
+\includegraphics[scale=0.09]{images/jai}
 \caption{Face tracking is done in 30fps with cascade classifier. $\theta_x$ and $\theta_y$ are displayed in degrees}
 \end{subfigure}
 \begin{subfigure}{0.5\textwidth}
-\includegraphics[scale=0.09]{jenna2}
+\includegraphics[scale=0.09]{images/jenna2}
 \caption{Yellow dot shows the original centroid of face detection, red dot is the after Kalman filtering}
 \end{subfigure}
 \caption{Results of the working Android demo}
@@ -484,15 +486,16 @@ Figure \ref{fig:androiddemo2} is an extension of the positive parallax concept w
 
 \begin{figure}[!htbp]
 \begin{subfigure}{0.5\textwidth}
-\includegraphics[scale=0.09]{3dperspective_user_left}
+\includegraphics[scale=0.09]{images/3dperspective_user_left}
 \caption{UI change when the user views the tablet from left}
 \end{subfigure}
 \begin{subfigure}{0.5\textwidth}
-\includegraphics[scale=0.09]{3dperspective_user_right}
+\includegraphics[scale=0.09]{images/3dperspective_user_right}
 \caption{UI change when user views the tablet from right}
 \end{subfigure}
 \begin{subfigure}{0.5\textwidth}
-\includegraphics[scale=0.09]{anaglyph}
+\includegraphics[scale=0.09]{images/anaglyph}
+\caption{A 3D anaglyph rendering on the positive parallax effect adding depth perception to parallax effect. This can be experienced by using anaglyph red-cyan glasses.}
 \end{subfigure}
 \caption{More results of the working Android demo}
 \label{fig:androiddemo2}
@@ -545,7 +548,7 @@ Viola, Paul, and Michael J. Jones. "Robust Real-Time Face Detection." \textit{In
 "Camera Calibration With OpenCV." \textit{OpenCV 3.0.0 Documentation}. Itseez, 10 Nov. 2014. Web. 15 Dec. 2015.  \url{http://docs.opencv.org/3.0-beta/doc/tutorials/calib3d/camera_calibration/camera_calibration.html}.
 
 \bibitem{Bzarg}
-Babb, Tim. "Bzarg." \textit{Bzarg}. Tim Babb, 11 Aug. 2015. Web. 16 Dec. 2015.
+Babb, Tim. How a kalman-filter works in pictures\url{www.bzarg.com}, 11 Aug. 2015.
 
 \bibitem{Army}
 Gordon, C. C., Bradtmiller, B., Clauser, C.E., Churchill, T., McConville, J.T., Tebbetts, I., and Walker, R.A. (1989). 1987–1988 Anthropometric Survey of U.S. Army Personnel: Methods and Summary Statistics. TR-89-044. Natick MA: U.S. Army Natick Research, Development and Engineering Center.
