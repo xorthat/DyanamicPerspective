@@ -250,7 +250,7 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 		for (int i = 0; i < len; i++) {
 			faceX = facesArray[i].x + facesArray[i].width / 2;
 			faceY = facesArray[i].y + facesArray[i].height / 2;
-			Imgproc.circle(mRgba, new Point(faceX, faceY), 5, new Scalar(255, 255, 0, 255));
+			Imgproc.circle(mRgba, new Point(faceX, faceY), 10, new Scalar(255, 255, 0, 255), -1);
 			Imgproc.rectangle(mRgba, facesArray[i].tl(), facesArray[i].br(), FACE_RECT_COLOR, 3);
 		}
 		// Kalman filter update
@@ -263,7 +263,7 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 		double faceXKF = estimated.get(0, 0)[0];
 		double faceYKF = estimated.get(1, 0)[0];
 		// kalman filter done
-		Imgproc.circle(mRgba, new Point(faceXKF, faceYKF), 5, new Scalar(255, 0, 0, 255));
+		Imgproc.circle(mRgba, new Point(faceXKF, faceYKF), 10, new Scalar(255, 0, 0, 255), -1);
 		Log.i(TAG, "Jai Predicted values are :"+ faceXKF+"x"+faceYKF);
 		thetaX = Math.atan((faceXKF - mRgba.cols() / 2) / f) * 180 / Math.PI;
 		thetaY = Math.atan((faceYKF - mRgba.rows() / 2) / f) * 180 / Math.PI;
@@ -271,7 +271,7 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 		maskY = 0.25 * H + 0.5 * f * Math.tan(thetaY * Math.PI / 180);
 
 		// Mat cube = Mat.zeros(mRgba.size(), mRgba.type());
-		if (maskX >= 0 && maskX <= W && maskY >= 0 && maskY <= H) {
+/*		if (maskX >= 0 && maskX <= W && maskY >= 0 && maskY <= H) {
 			Rect ROI = new Rect((int) (maskX), (int) (maskY), (int) (W / 2), (int) (H / 2));
 			Scalar col = new Scalar(255, 255, 255, 255);
 			mRgba.submat(ROI).setTo(col);
@@ -282,7 +282,7 @@ public class FdActivity extends Activity implements CvCameraViewListener2, OnCli
 			for (int i = 0; i < source.length; i++) {
 				Imgproc.line(mRgba, new Point(source[i][0], source[i][1]), new Point(dest[i][0], dest[i][1]), col, 4);
 			}
-		}
+		}*/
 /*		FeatureDetector detector = FeatureDetector.create(FeatureDetector.SIFT);
 	    DescriptorExtractor SurfExtractor = DescriptorExtractor.create(DescriptorExtractor.SURF);
 	    MatOfKeyPoint keypoints = new MatOfKeyPoint();
